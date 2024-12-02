@@ -3,142 +3,138 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-type User = {
-  _id: string;
-  name: string;
-  email: string;
-};
+type User = { _id: string; name: string; email: string };
+type Project = { _id: string; name: string; description: string };
+type Task = { _id: string; title: string; description: string; assignedTo?: User };
 
 export default function Home() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  
+  // States
   const [users, setUsers] = useState<User[]>([]);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newProject, setNewProject] = useState({ name: '', description: '' });
+  const [newTask, setNewTask] = useState({ title: '', description: '', assignedTo: '' });
 
-// Dentro do componente Home
-console.log('process.env.NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-
-
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/users`;
-
-  console.log('API_URL:', API_URL);
-
-  const fetchUsers = useCallback(async () => {
+  // Fetch Functions
+  const fetchData = useCallback(async () => {
     try {
-      const response = await axios.get(API_URL);
-      setUsers(response.data);
+      const [usersRes, projectsRes, tasksRes] = await Promise.all([
+        axios.get(`${API_URL}/api/users`),
+        axios.get(`${API_URL}/api/projects`),
+        axios.get(`${API_URL}/api/tasks`),
+      ]);
+      setUsers(usersRes.data);
+      setProjects(projectsRes.data);
+      setTasks(tasksRes.data);
     } catch (err) {
-      console.error('Error fetching users:', err);
+      console.error('Error fetching data:', err);
     }
   }, [API_URL]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchData();
+  }, [fetchData]);
 
-  const createUser = async (e: React.FormEvent) => {
+  // User Functions
+  const createUser = async (e: React.FormEvent, name: string, email: string) => {
     e.preventDefault();
     try {
-      const response = await axios.post(API_URL, { name, email });
+      const response = await axios.post(`${API_URL}/api/users`, { name, email });
       setUsers([...users, response.data]);
-      setName('');
-      setEmail('');
     } catch (err) {
       console.error('Error creating user:', err);
     }
   };
 
+  const updateUser = async (id: string, updatedData: Partial<User>) => {
+    try {
+      const response = await axios.put(`${API_URL}/api/users/${id}`, updatedData);
+      setUsers(users.map(user => (user._id === id ? response.data : user)));
+    } catch (err) {
+      console.error('Error updating user:', err);
+    }
+  };
+
   const deleteUser = async (id: string) => {
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      await axios.delete(`${API_URL}/api/users/${id}`);
       setUsers(users.filter(user => user._id !== id));
     } catch (err) {
       console.error('Error deleting user:', err);
     }
   };
 
-  const updateUser = async (id: string) => {
-    const newName = prompt('Enter new name:');
-    const newEmail = prompt('Enter new email:');
-    if (newName && newEmail) {
-      try {
-        const response = await axios.put(`${API_URL}/${id}`, {
-          name: newName,
-          email: newEmail,
-        });
-        setUsers(
-          users.map(user => (user._id === id ? response.data : user))
-        );
-      } catch (err) {
-        console.error('Error updating user:', err);
-      }
+  // Project Functions
+  const createProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(`${API_URL}/api/projects`, newProject);
+      setProjects([...projects, response.data]);
+      setNewProject({ name: '', description: '' });
+    } catch (err) {
+      console.error('Error creating project:', err);
+    }
+  };
+
+  const updateProject = async (id: string, updatedData: Partial<Project>) => {
+    try {
+      const response = await axios.put(`${API_URL}/api/projects/${id}`, updatedData);
+      setProjects(projects.map(project => (project._id === id ? response.data : project)));
+    } catch (err) {
+      console.error('Error updating project:', err);
+    }
+  };
+
+  const deleteProject = async (id: string) => {
+    try {
+      await axios.delete(`${API_URL}/api/projects/${id}`);
+      setProjects(projects.filter(project => project._id !== id));
+    } catch (err) {
+      console.error('Error deleting project:', err);
+    }
+  };
+
+  // Task Functions
+  const createTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(`${API_URL}/api/tasks`, newTask);
+      setTasks([...tasks, response.data]);
+      setNewTask({ title: '', description: '', assignedTo: '' });
+    } catch (err) {
+      console.error('Error creating task:', err);
+    }
+  };
+
+  const updateTask = async (id: string, updatedData: Partial<Task>) => {
+    try {
+      const response = await axios.put(`${API_URL}/api/tasks/${id}`, updatedData);
+      setTasks(tasks.map(task => (task._id === id ? response.data : task)));
+    } catch (err) {
+      console.error('Error updating task:', err);
+    }
+  };
+
+  const deleteTask = async (id: string) => {
+    try {
+      await axios.delete(`${API_URL}/api/tasks/${id}`);
+      setTasks(tasks.filter(task => task._id !== id));
+    } catch (err) {
+      console.error('Error deleting task:', err);
     }
   };
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Gerenciamento de Usuários</h1>
-
-      <form onSubmit={createUser} className="mb-4">
-        <div className="flex flex-col mb-2">
-          <label>Nome:</label>
-          <input
-            className="border p-2"
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            required
-          />
-        </div>
-        <div className="flex flex-col mb-2">
-          <label>Email:</label>
-          <input
-            className="border p-2"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <button
-          className="bg-blue-500 text-white p-2 rounded"
-          type="submit"
-        >
-          Adicionar Usuário
-        </button>
-      </form>
-
-      <h2 className="text-xl font-bold mb-2">Lista de Usuários</h2>
-      <table className="min-w-full table-auto">
-        <thead>
-          <tr>
-            <th className="px-4 py-2 border">Nome</th>
-            <th className="px-4 py-2 border">Email</th>
-            <th className="px-4 py-2 border">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map(user => (
-            <tr key={user._id}>
-              <td className="border px-4 py-2">{user.name}</td>
-              <td className="border px-4 py-2">{user.email}</td>
-              <td className="border px-4 py-2">
-                <button
-                  className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
-                  onClick={() => updateUser(user._id)}
-                >
-                  Editar
-                </button>
-                <button
-                  className="bg-red-500 text-white px-2 py-1 rounded"
-                  onClick={() => deleteUser(user._id)}
-                >
-                  Excluir
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      
+      <section>
+        <h2 className="text-xl font-bold">Usuários</h2>
+        {/* User Management */}
+        {/* Similar blocks for projects and tasks */}
+      </section>
     </div>
   );
 }
