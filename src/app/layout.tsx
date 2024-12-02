@@ -13,7 +13,7 @@ export default function RootLayout({
         <nav className="bg-white shadow-md">
           <div className="container mx-auto px-4 py-2 flex justify-between items-center">
             <a href="/" className="text-2xl font-bold text-purple-600">
-              My App
+              TempoTrack
             </a>
             <div className="flex items-center gap-4">
               <a
@@ -35,7 +35,10 @@ export default function RootLayout({
           {children}
         </main>
         <footer className="bg-gray-900 text-white text-center py-4">
-          <p>© 2023 My App. All rights reserved.</p>
+          <p>© 2023 TempoTrack. All rights reserved.</p>
+          <p className="text-sm text-gray-400">
+            API URL: {process.env.NEXT_PUBLIC_API_URL || "Not Defined"}
+          </p>
         </footer>
       </body>
     </html>

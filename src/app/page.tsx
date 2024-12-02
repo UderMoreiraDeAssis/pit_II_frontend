@@ -9,6 +9,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      console.log(process.env.NEXT_PUBLIC_API_URL);
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`);
       const data = await res.json();
       setUsers(data);
